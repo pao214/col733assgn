@@ -1,0 +1,536 @@
+{{extend 'layout.html'}}
+<div id="tabs-task">
+<ul>
+    {{if install_requests != None:}}
+    <li><a href="#installTab", onclick="set_tab_cookie(0);">Install VM ({{=len(install_requests)}})</a></li>
+    {{pass}}
+    {{if clone_requests != None:}}
+    <li><a href="#cloneTab", onclick="set_tab_cookie(1);">Clone VM ({{=len(clone_requests)}})</a></li>
+    {{pass}}
+    {{if disk_requests != None:}}
+    <li><a href="#diskTab", onclick="set_tab_cookie(2);">Attach Disk ({{=len(disk_requests)}})</a></li>
+    {{pass}}
+    {{if edit_requests != None:}}
+    <li><a href="#editTab", onclick="set_tab_cookie(3);">Edit Configuration ({{=len(edit_requests)}})</a></li>
+    {{pass}}
+    {{if install_object_store_requests != None:}}
+    <li><a href="#objectTab", onclick="set_tab_cookie(4);">Object Store ({{=len(install_object_store_requests)}})</a></li>
+    {{pass}}
+    {{if install_container_requests != None:}}
+        <li><a href="#containerTab", onclick="set_tab_cookie(5);">Install Container ({{=len(install_container_requests)}})</a></li>
+    {{pass}}
+</ul>
+
+{{if install_requests != None:}}
+<div id="installTab">
+
+{{if len(install_requests) == 0:}}
+<h3>No Pending Requests</h3>
+    {{else:}}
+
+    <table id="sortTable1" class="tablesorter">
+    <thead>
+      <tr>
+        <th>Requested By</th>
+        <th>Collaborators</th>
+        <th>Organisation</th>
+        <th>VM Name</th>
+        <th>vCPUs</th>
+        <th>RAM</th>
+        <th>HDD</th>
+        <th>Public IP</th>
+        <th>Security Domain</th>
+        <th>Approval Status</th>
+        <th>Action</th>
+      </tr> 
+      </thead>
+      <tbody>
+      {{for pend_request in install_requests:}}
+       <tr>
+            <td>{{=pend_request['requester_name']}}</td>
+            <td>{{=pend_request['collaborators']}}</td>
+            <td>{{=pend_request['organisation']}}</td>
+            <td>{{=pend_request['name']}}</td>
+            <td>{{=pend_request['vCPUs']}}</td>
+            <td>{{=pend_request['RAM']}}</td>
+            <td>{{=pend_request['HDD']}}</td>
+            <td>
+            {{if pend_request['public_ip']:}}
+                    <span class="icon-ok"/>
+            {{else:}}        
+                    <span class="icon-remove"/>
+            {{pass}}
+            </td>
+            <td>{{=pend_request['security_domain']}}</td>
+            <td>
+            {{if pend_request['requested_by'] == USER:}}
+            	{{=pend_request['faculty_name']}}
+            	{{if pend_request['status'] == REQ_STATUS_REQUESTED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{pass}}
+            	<br/>
+            	{{=pend_request['organisation']}} Admin
+            	{{if pend_request['status'] == REQ_STATUS_REQUESTED or pend_request['status'] == REQ_STATUS_VERIFIED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{pass}}
+            {{elif pend_request['requested_by'] == FACULTY:}}
+            	{{=pend_request['organisation']}} Admin
+            	{{if pend_request['status'] == REQ_STATUS_REQUESTED or pend_request['status'] == REQ_STATUS_VERIFIED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{pass}}
+            {{else:}}<i>Pre-Approved</i>&nbsp;{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            {{pass}}
+            </td>
+            <td id={{=str(pend_request['id'])}}>
+                {{if pend_request['status'] == REQ_STATUS_IN_QUEUE:}}
+                    {{=A(IMG(_src=URL('static','images/vm_add.png'), _height=18, _width=18), _href='#', 
+                        _title="Task in Progress", _alt="Task in Progress")}}&nbsp;
+                {{else:}}
+                    {{=A(IMG(_src=URL('static','images/accept.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='admin',f='approve_request', args=[pend_request['id']]), _id="accept_"+str(pend_request['id']),
+                        _title="Approve Request", _alt="Approve Request", _onclick="tab_refresh();return check_resource("+str(pend_request['id'])+");")}}
+                    &nbsp;&nbsp;
+                    {{=A(IMG(_src=URL('static','images/reject.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='admin',f='reject_request', args=[pend_request['id']]), _id="reject_"+str(pend_request['id']),
+                        _title="Reject Request", _alt="Reject Request", _onclick="tab_refresh();")}}
+                    &nbsp;&nbsp;
+                    {{=A(IMG(_src=URL('static','images/edit.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='faculty',f='edit_pending_request', args=[pend_request['id']]), _id="edit_"+str(pend_request['id']),
+                        _title="Edit Request", _alt="Edit Request", _onclick="tab_refresh();")}}
+                {{pass}}
+            </td>
+          </tr>
+      {{pass}}
+	</tbody>
+    </table>
+{{pass}}
+
+</div>
+{{pass}}
+{{if clone_requests != None:}}
+<div id="cloneTab">
+{{if len(clone_requests) == 0:}}
+<h3>No Pending Requests</h3>
+    {{else:}}
+
+    <table id="sortTable2" class="tablesorter">
+    <thead>
+      <tr>
+        <th>Requested By</th>
+        <th>Organisation</th>
+        <th>No. of Clones</th>
+        <th>VM Name</th>
+        <th>RAM</th>
+        <th>HDD</th>
+        <th>vCPUs</th>
+        <th>Approval Status</th>
+        <th>Action</th>
+      </tr> 
+      </thead>
+      <tbody>
+      {{for pend_request in clone_requests:}}
+       <tr>
+            <td>{{=pend_request['requester_name']}}</td>
+            <td>{{=pend_request['organisation']}}</td>
+            <td><b>{{=pend_request['clone_count']}}</b></td>
+            <td>{{=pend_request['name']}}</td>
+            <td>{{=pend_request['RAM']}}</td>
+            <td>{{=pend_request['HDD']}}</td>
+            <td>{{=pend_request['vCPUs']}}</td>
+            <td>
+            {{if pend_request['requested_by'] == USER:}}
+            	{{=pend_request['faculty_name']}}
+            	{{if pend_request['status'] == REQ_STATUS_REQUESTED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{pass}}
+            	<br/>
+            	{{=pend_request['organisation']}} Admin
+            	{{if pend_request['status'] == REQ_STATUS_REQUESTED or pend_request['status'] == REQ_STATUS_VERIFIED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{pass}}
+            {{elif pend_request['requested_by'] == FACULTY:}}
+            	{{=pend_request['organisation']}} Admin
+            	{{if pend_request['status'] == REQ_STATUS_REQUESTED or pend_request['status'] == REQ_STATUS_VERIFIED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{pass}}
+            {{else:}}<i>Pre-Approved</i>&nbsp;{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            {{pass}}
+            </td>
+            <td>
+                {{if pend_request['status'] == REQ_STATUS_IN_QUEUE:}}
+                    {{=A(IMG(_src=URL('static','images/vm_add.png'), _height=18, _width=18), _href='#', 
+                        _title="Task in Progress", _alt="Task in Progress")}}&nbsp;
+                {{else:}}
+                    {{=A(IMG(_src=URL('static','images/accept.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='admin',f='approve_request', args=[pend_request['id']]), _id="accept_"+str(pend_request['id']),
+                        _title="Approve Request", _alt="Approve Request", _onclick="tab_refresh();return check_resource("+str(pend_request['id'])+");")}}
+                    &nbsp;&nbsp;
+                    {{=A(IMG(_src=URL('static','images/reject.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='admin',f='reject_request', args=[pend_request['id']]), _id="reject_"+str(pend_request['id']),
+                        _title="Reject Request", _alt="Reject Request", _onclick="tab_refresh();")}}
+                    &nbsp;&nbsp;
+                    {{=A(IMG(_src=URL('static','images/edit.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='faculty',f='edit_pending_request', args=[pend_request['id']]), _id="edit_"+str(pend_request['id']),
+                        _title="Edit Request", _alt="Edit Request", _onclick="tab_refresh();")}}
+                {{pass}}
+            </td>
+          </tr>
+      {{pass}}
+	</tbody>
+    </table>
+{{pass}}
+
+</div>
+{{pass}}
+{{if disk_requests != None:}}
+<div id="diskTab">
+{{if len(disk_requests) == 0:}}
+<h3>No Pending Requests</h3>
+    {{else:}}
+
+    <table id="sortTable3" class="tablesorter">
+    <thead>
+      <tr>
+        <th>Requested By</th>
+        <th>Organisation</th>
+        <th>VM Name</th>
+        <th>vCPUs</th>
+        <th>RAM</th>
+        <th>HDD</th>
+        <th>Extra HDD</th>
+        <th>Additional HDD</th>
+        <th>Approval Status</th>
+        <th>Action</th>
+      </tr> 
+      </thead>
+      <tbody>
+      {{for pend_request in disk_requests:}}
+       <tr>
+            <td>{{=pend_request['requester_name']}}</td>
+            <td>{{=pend_request['organisation']}}</td>
+            <td>{{=A(pend_request['name'],_href=URL(r=request, c='user',f='settings', args=[pend_request['parent_vm_id']]))}}</td>
+            <td>{{=pend_request['vCPUs']}}</td>
+            <td>{{=pend_request['RAM']}}</td>
+            <td>{{=pend_request['HDD']}}</td>
+            <td>{{=pend_request['extra_HDD']}}</td>
+            <td><b>{{=pend_request['attach_disk']}}</b></td>
+            <td>
+            {{if pend_request['requested_by'] == USER:}}
+            	{{=pend_request['faculty_name']}}
+            	{{if pend_request['status'] == REQ_STATUS_REQUESTED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{pass}}
+            	<br/>
+            	{{=pend_request['organisation']}} Admin
+            	{{if pend_request['status'] == REQ_STATUS_REQUESTED or pend_request['status'] == REQ_STATUS_VERIFIED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{pass}}
+            {{elif pend_request['requested_by'] == FACULTY:}}
+            	{{=pend_request['organisation']}} Admin
+            	{{if pend_request['status'] == REQ_STATUS_REQUESTED or pend_request['status'] == REQ_STATUS_VERIFIED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{pass}}
+            {{else:}}<i>Pre-Approved</i>&nbsp;{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            {{pass}}
+            </td>
+            <td>
+                {{if pend_request['status'] == REQ_STATUS_IN_QUEUE:}}
+                    {{=A(IMG(_src=URL('static','images/vm_add.png'), _height=18, _width=18), _href='#', 
+                        _title="Task in Progress", _alt="Task in Progress")}}&nbsp;
+                {{else:}}
+                    {{=A(IMG(_src=URL('static','images/accept.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='admin',f='approve_request', args=[pend_request['id']]), _id="accept_"+str(pend_request['id']),
+                        _title="Approve Request", _alt="Approve Request", _onclick="tab_refresh();")}}
+                    &nbsp;&nbsp;
+                    {{=A(IMG(_src=URL('static','images/reject.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='admin',f='reject_request', args=[pend_request['id']]), _id="reject_"+str(pend_request['id']),
+                        _title="Reject Request", _alt="Reject Request", _onclick="tab_refresh();")}}
+                    &nbsp;&nbsp;
+                    {{=A(IMG(_src=URL('static','images/edit.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='faculty',f='edit_pending_request', args=[pend_request['id']]), _id="edit_"+str(pend_request['id']),
+                        _title="Edit Request", _alt="Edit Request", _onclick="tab_refresh();")}}
+                {{pass}}
+            </td>
+          </tr>
+      {{pass}}
+	</tbody>
+    </table>
+{{pass}}
+
+</div>
+{{pass}}
+{{if edit_requests != None:}}
+<div id="editTab">
+
+{{if len(edit_requests) == 0:}}
+<h3>No Pending Requests</h3>
+    {{else:}}
+
+    <table id="sortTable4" class="tablesorter">
+    <thead>
+      <tr>
+        <th>Requested<br/>By</th>
+        <th>Organisation</th>
+        <th>VM Name</th>
+        <th>vCPUs</th>
+        <th>New<br/>vCPUs</th>
+        <th>RAM</th>
+        <th>New<br/>RAM</th>
+        <th>Public<br/>IP</th>
+        <th>New<br/>Public IP</th>
+        <th>Security<br/>Domain</th>
+        <th>New Security<br/>Domain</th>
+        <th>Approval<br/>Status</th>
+        <th>Action</th>
+      </tr> 
+      </thead>
+      <tbody>
+      {{for pend_request in edit_requests:}}
+       <tr>
+            <td>{{=pend_request['requester_name']}}</td>
+            <td>{{=pend_request['organisation']}}</td>
+            <td>{{=A(pend_request['name'],_href=URL(r=request, c='user',f='settings', args=[pend_request['parent_vm_id']]))}}</td>
+            <td>{{=pend_request['old_vCPUs']}}</td>
+            <td><b>{{=pend_request['vCPUs']}}</b></td>
+            <td>{{=pend_request['old_RAM']}}</td>
+            <td><b>{{=pend_request['RAM']}}</b></td>
+            <td>
+            {{if pend_request['old_public_ip']:}}
+                    <span class="icon-ok"/>
+            {{else:}}        
+                    <span class="icon-remove"/>
+            {{pass}}
+            </td>
+            <td>
+            {{if pend_request['public_ip']:}}
+                    <span class="icon-ok"/>
+            {{else:}}        
+                    <span class="icon-remove"/>
+            {{pass}}
+            </td>
+            <td>{{=pend_request['old_security_domain']}}</td>
+            <td><b>{{=pend_request['security_domain']}}</b></td>
+            <td>
+            {{if pend_request['requested_by'] == USER:}}
+            	{{=pend_request['faculty_name']}}
+            	{{if pend_request['status'] == REQ_STATUS_REQUESTED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{pass}}
+            	<br/>
+            	{{=pend_request['organisation']}} Admin
+            	{{if pend_request['status'] == REQ_STATUS_REQUESTED or pend_request['status'] == REQ_STATUS_VERIFIED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{pass}}
+            {{elif pend_request['requested_by'] == FACULTY:}}
+            	{{=pend_request['organisation']}} Admin
+            	{{if pend_request['status'] == REQ_STATUS_REQUESTED or pend_request['status'] == REQ_STATUS_VERIFIED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{pass}}
+            {{else:}}<i>Pre-Approved</i>&nbsp;{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            {{pass}}
+            </td>
+            <td>
+                {{if pend_request['status'] == REQ_STATUS_IN_QUEUE:}}
+                    {{=A(IMG(_src=URL('static','images/vm_add.png'), _height=18, _width=18), _href='#', 
+                        _title="Task in Progress", _alt="Task in Progress")}}&nbsp;
+                {{else:}}
+                    {{=A(IMG(_src=URL('static','images/accept.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='admin',f='approve_request', args=[pend_request['id']]), _id="accept_"+str(pend_request['id']),
+                        _title="Approve Request", _alt="Approve Request", _onclick="tab_refresh();")}}
+                    &nbsp;&nbsp;
+                    {{=A(IMG(_src=URL('static','images/reject.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='admin',f='reject_request', args=[pend_request['id']]), _id="reject_"+str(pend_request['id']),
+                        _title="Reject Request", _alt="Reject Request", _onclick="tab_refresh();")}}
+                    &nbsp;&nbsp;
+                    {{=A(IMG(_src=URL('static','images/edit.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='faculty',f='edit_pending_request', args=[pend_request['id']]), _id="edit_"+str(pend_request['id']),
+                        _title="Edit Request", _alt="Edit Request", _onclick="tab_refresh();")}}
+                {{pass}}
+            </td>
+          </tr>
+      {{pass}}
+	</tbody>
+    </table>
+{{pass}}
+
+</div>
+{{pass}}
+{{if install_object_store_requests != None:}}
+<div id="objectTab">
+
+{{if len(install_object_store_requests) == 0:}}
+<h3>No Pending Requests</h3>
+    {{else:}}
+
+    <table id="sortTable5" class="tablesorter">
+    <thead>
+      <tr>
+        <th>Requested By</th>
+        <th>Faculty</th>
+        <th>Object Store Name</th>
+        <th>Object Store Size</th>
+        <th>Object Store Type</th>
+        <th>Approval Status</th>
+        <th>Action</th>
+      </tr> 
+      </thead>
+      <tbody>
+      {{for pend_request in install_object_store_requests:}}
+       <tr id='Row_{{=pend_request['id']}}'>
+            <td>{{=pend_request['requester_name']}}</td>
+            <td>{{=pend_request['faculty_name']}}</td>
+            <td>{{=pend_request['object_store_name']}}</td>
+            <td>{{=pend_request['object_store_size']}}</td>
+            <td>{{=pend_request['object_store_type']}}</td>
+            <td>
+            {{if pend_request['requested_by'] == USER:}}
+                {{=pend_request['faculty_name']}}
+                {{if pend_request['status'] == REQ_STATUS_REQUESTED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+                {{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+                {{pass}}
+                <br/>
+                {{=pend_request['organisation']}} Admin
+                {{if pend_request['status'] == REQ_STATUS_REQUESTED or pend_request['status'] == REQ_STATUS_VERIFIED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+                {{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+                {{pass}}
+            {{elif pend_request['requested_by'] == FACULTY:}}
+                {{=pend_request['organisation']}} Admin
+                {{if pend_request['status'] == REQ_STATUS_REQUESTED or pend_request['status'] == REQ_STATUS_VERIFIED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+                {{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+                {{pass}}
+            {{else:}}<i>Pre-Approved</i> {{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            {{pass}}
+            </td>
+            <td id={{=str(pend_request['id'])}}>
+                {{if pend_request['status'] == REQ_STATUS_IN_QUEUE:}}
+                    {{=A(IMG(_src=URL('static','images/vm_add.png'), _height=18, _width=18), _href='#', 
+                        _title="Task in Progress", _alt="Task in Progress")}} 
+                {{else:}}
+                    {{=A(IMG(_src=URL('static','images/accept.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='admin',f='approve_request', args=[pend_request['id']]), _id="accept_"+str(pend_request['id']),
+                        _title="Approve Request", _alt="Approve Request", _onclick="tab_refresh();return check_resource("+str(pend_request['id'])+");")}}
+                      
+                    {{=A(IMG(_src=URL('static','images/reject.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='admin',f='reject_request', args=[pend_request['id']]), _id="reject_"+str(pend_request['id']),
+                        _title="Reject Request", _alt="Reject Request", _onclick="tab_refresh();")}}
+                      
+                    {{=A(IMG(_src=URL('static','images/edit.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='faculty',f='edit_pending_request', args=[pend_request['id']]), _id="edit_"+str(pend_request['id']),
+                        _title="Edit Request", _alt="Edit Request", _onclick="tab_refresh();")}}
+                {{pass}}
+            </td>
+          </tr>
+      {{pass}}
+    </tbody>
+    </table>
+{{pass}}
+
+</div>
+{{pass}}
+{{if install_container_requests != None:}}
+<div id="containerTab">
+
+{{if len(install_container_requests) == 0:}}
+<h3>No Pending Requests</h3>
+    {{else:}}
+
+    <table id="sortTable6" class="tablesorter">
+    <thead>
+      <tr>
+        <th>Requested By</th>
+        <th>Faculty</th>
+        <th>Name</th>
+        <th>Restart Policy</th>
+        <th>Enviornment Variable</th>
+        <th>RAM</th>
+        <th>vCPU</th>
+        <th>Approval Status</th>
+        <th>Action</th>
+      </tr> 
+      </thead>
+      <tbody>
+      {{for pend_request in install_container_requests:}}
+       <tr id="Row_{{=pend_request['id']}}">
+            <td>{{=pend_request['requester_name']}}</td>
+            <td>{{=pend_request['faculty_name']}}</td>
+            <td>{{=pend_request['name']}}</td>
+            <td>{{=pend_request['restart_policy']}}</td>
+            <td>{{=pend_request['env_vars']}}</td>
+            <td>{{=pend_request['RAM']}}</td>
+            <td>{{=pend_request['vCPUs']}}</td>
+            <td>
+            {{if pend_request['requested_by'] == USER:}}
+            	{{=pend_request['faculty_name']}}
+            	{{if pend_request['status'] == REQ_STATUS_REQUESTED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{pass}}
+            	<br/>
+            	{{=pend_request['organisation']}} Admin
+            	{{if pend_request['status'] == REQ_STATUS_REQUESTED or pend_request['status'] == REQ_STATUS_VERIFIED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{pass}}
+            {{elif pend_request['requested_by'] == FACULTY:}}
+            	{{=pend_request['organisation']}} Admin
+            	{{if pend_request['status'] == REQ_STATUS_REQUESTED or pend_request['status'] == REQ_STATUS_VERIFIED:}}{{=IMG(_src=URL('static','images/redlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{else:}}{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            	{{pass}}
+            {{else:}}<i>Pre-Approved</i>&nbsp;{{=IMG(_src=URL('static','images/greenlight.gif'), _style='height:14px;width:14px;border:0px')}}
+            {{pass}}
+            </td>
+            <td id={{=str(pend_request['id'])}}>
+                {{if pend_request['status'] == REQ_STATUS_IN_QUEUE:}}
+                    {{=A(IMG(_src=URL('static','images/vm_add.png'), _height=18, _width=18), _href='#', 
+                        _title="Task in Progress", _alt="Task in Progress")}} 
+                {{else:}}
+                    {{=A(IMG(_src=URL('static','images/accept.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='admin',f='approve_request', args=[pend_request['id']]), _id="accept_"+str(pend_request['id']),
+                        _title="Approve Request", _alt="Approve Request", _onclick="tab_refresh();return check_resource("+str(pend_request['id'])+");")}}
+                      
+                    {{=A(IMG(_src=URL('static','images/reject.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='admin',f='reject_request', args=[pend_request['id']]), _id="reject_"+str(pend_request['id']),
+                        _title="Reject Request", _alt="Reject Request", _onclick="tab_refresh();")}}
+                      
+                    {{=A(IMG(_src=URL('static','images/edit.png'), _height=18, _width=18), 
+                        _href=URL(r=request, c='faculty',f='edit_pending_request', args=[pend_request['id']]), _id="edit_"+str(pend_request['id']),
+                        _title="Edit Request", _alt="Edit Request", _onclick="tab_refresh();")}}
+                {{pass}}
+            </td>
+          </tr>
+      {{pass}}
+    </tbody>
+    </table>
+{{pass}}
+
+</div>
+{{pass}}
+</div>
+
+<script>
+jQuery(document).ready(function(){
+      jQuery("#sortTable1").tablesorter({ headers: { 7: {sorter:"ipAddress"}} }); 
+      jQuery("#sortTable2").tablesorter(); 
+      jQuery("#sortTable3").tablesorter(); 
+      jQuery("#sortTable4").tablesorter(); 
+      jQuery("#sortTable5").tablesorter();
+      jQuery("#sortTable6").tablesorter();
+});
+
+function check_resource(request_id){
+
+    var verify_url = "{{=URL('verify_vm_resource')}}";
+    jQuery.post(verify_url, {request_id:request_id},
+        function(result){
+            if(result != 'Success'){
+				$('.flash').html(result).slideDown();
+            }else
+            {
+            	var link = $("#accept_"+request_id);
+				window.location.href = link.attr("href");            
+			}
+        }
+    );
+	return false;
+}
+</script>
+
+

@@ -1,0 +1,171 @@
+{{extend 'layout.html'}}
+<script>
+jQuery('#target_vnc').click(function(e){
+    e.preventDefault();
+    
+    var url=$("#target_vnc").text();
+    console.debug(url);
+
+    window.open(url);
+});
+
+function vnc_url()
+{
+
+
+Vm_id={{=vminfo['id']}};
+
+
+jQuery.ajax({type:"POST",url:"{{=URL('get_vnc_url')}}", data:{vm_id:Vm_id},dataType:"text", success:function(ret) {
+	ret = ret.replace('<html>','');
+       ret = ret.replace('</html>','');
+       ret = ret.replace('<body>','');
+       ret = ret.replace('</body>','');
+       ret = ret.replace('<p>','');
+       ret = ret.replace('</p>','');
+
+	 $("#target_vnc").attr("target", "_blank");
+       $("#target_vnc").text(ret);
+       $("#target_vnc").attr("href",ret);
+	
+       } }); 
+
+}
+    
+
+</script>
+
+<script>
+
+function confirm_vm_deletion(){
+
+    if(confirm('Are you sure you want to delete it')) {
+    
+            if(confirm('Do you want to delete hard disk as well?')) {
+                window.location ='{{=URL(r=request, f='delete_vm', args=[vminfo['id']])}}'
+            }
+    }
+}
+</script>
+
+{{if vminfo:}}
+
+<div class="post">
+
+    <h2 class="title">VM Configuration </h2>
+
+    <div class="TABLE">
+    <table id="configuration">
+        <tr>
+            <th>Name</th>
+            <th>HDD</th>
+            <th>RAM</th>
+            <th>VCPUs</th>
+            <th>Operating System</th>
+            <th>Private IP</th>
+            <th>Public IP</th>
+            <th>Security Domain</th>
+            <th>Status</th>
+        </tr>
+        <tr>
+            <td>{{=vminfo['name']}}</td>
+            <td>{{=vminfo['hdd']}}</td>
+            <td>{{=vminfo['ram']}}</td>
+            <td>{{=vminfo['vcpus']}}</td>
+            <td>{{=vminfo['os_type']}}</td>
+            <td>{{=vminfo['private_ip']}}</td>
+            <td>{{=vminfo['public_ip']}}</td>
+            <td>{{=vminfo['security_domain']}}</td>
+            <td>{{=vminfo['status']}}</td>
+        </tr>
+    </table>    
+    </div>
+    {{if is_moderator():}}
+	    <p><strong>Host: </strong>{{=vminfo['host']}}</p>
+    {{pass}}
+<p><strong>VNC Link :</strong><a id="target_vnc">Please click on VNC button to get VNC link</a>
+            
+    
+ <p><strong>Purpose :</strong> {{=vminfo['purpose']}}</p>
+
+</div>
+<br/>
+{{pass}}
+
+{{if vmusers:}}
+<div class="post">
+    <h2 class="title">VM Users</h2>
+    <table id="vm_users">
+        <tr>
+      {{for user in vmusers:}}
+            <td id="{{=user.id}}">{{=(str(user.first_name) + " " + str(user.last_name))}}</td>
+            <td>
+                <a alt="Remove the user permissions" title="Remove the user permissions" href="{{=URL(request.application, 'admin','delete_user_vm', args=[vminfo['id'], user.id])}}" style="text-decoration:none;color:black;"><b>X<b/>
+                </a>
+            </td>
+      {{pass}}
+        </tr>
+      </table>
+</div>
+{{pass}}
+
+{{if vmoperations:}}
+<br/>
+<div class="post">
+    <h2 class="title">VM Operations</h2>
+    <table id="vm_ops">
+        <tr>
+      {{for operation in vmoperations:}}
+    <td>{{=operation}}</td>
+      {{pass}}
+        </tr>
+      </table>
+</div>
+{{pass}}
+
+   <table width="100%" cellpadding="0" cellspacing="0" border="0">
+	   <tr>
+	   	<td><h2>Snapshot(s)</h2></td>
+	   	<td style="text-align:right;"><a href="#" onclick="$('#configure_block').toggle();">Configure Snapshots</a></td></tr>
+   </table> 
+   <hr style="display: block;border-width: 2px"/>
+        
+    <div id="configure_block" style="display:none">
+        
+        {{=INPUT(_type="checkbox", _name="flag", _value=SNAPSHOT_DAILY, _checked=True if (int(vminfo['snapshot_flag']) & SNAPSHOT_DAILY) else False)}}Daily
+        {{=INPUT(_type="checkbox", _name="flag", _value=SNAPSHOT_WEEKLY, _checked=True if (int(vminfo['snapshot_flag']) & SNAPSHOT_WEEKLY) else False)}}Weekly
+        {{=INPUT(_type="checkbox", _name="flag", _value=SNAPSHOT_MONTHLY, _checked=True if (int(vminfo['snapshot_flag']) & SNAPSHOT_MONTHLY) else False)}}Monthly
+        {{=INPUT(_type="checkbox", _name="flag", _value=SNAPSHOT_YEARLY, _checked=True if (int(vminfo['snapshot_flag']) & SNAPSHOT_YEARLY) else False)}}Yearly
+        &nbsp;&nbsp;<img src="{{=URL('static','images/save.png')}}" onclick="configure_snapshot()" alt="Save Changes"/>
+    </div>
+
+    <table id="vm_snaps">  
+            {{if vmsnapshots:}}        
+                 {{for snapshot in vmsnapshots:}}
+                 <tr id="{{=snapshot['id']}}">
+                     <td>{{=snapshot['type']}}</td>
+                     <td>{{=snapshot['name']}}</td>
+                     <td>{{=snapshot['revert']}}</td>
+                     <td>{{=snapshot['delete']}}</td>
+                 </tr>
+                 {{pass}}
+            {{pass}}
+   </table>
+
+<script>
+function configure_snapshot() {
+    var flag=0;
+    av=document.getElementsByName("flag");
+    for (e=0; e<av.length; e++) {
+       if (av[e].checked==true) {
+          flag= flag ^ parseInt(av[e].value,10);
+       }
+    }
+
+    var snapshot_url = "{{=URL('configure_snapshot', args=[vminfo['id']])}}";
+    
+    $.post(snapshot_url,{snapshot_flag:flag},function(result){
+      alert("Rolling snapshot frequency successfully configured");
+  });}
+
+</script>

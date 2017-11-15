@@ -1,0 +1,112 @@
+{{extend 'layout.html'}}
+
+<div id="tabs-task">
+
+  <ul>
+    <li><a href="#vmTab", onclick="set_tab_cookie(0);">My VMs</a></li>
+    <li><a href="#templateTab", onclick="set_tab_cookie(1);">My Templates</a></li>
+  </ul>
+  
+  <div id="vmTab">
+  {{
+    if not hosted_vm:
+  }}
+  <h3>No Available VM</h3>
+  {{else:}}
+  <table id="myvms" class="tablesorter">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Owner</th>
+        {{if is_moderator():}}
+        <th>Host</th>
+        {{pass}}
+        <th>Private IP</th>
+        <th>Public IP</th>
+		<th>RAM</th>
+		<th>vCPUs</th>
+        <th>Status</th>
+        <th>Settings</th>
+      </tr>
+    </thead>
+    <tbody>
+    {{for vm in hosted_vm:}}
+      <tr>
+        <td>{{=vm['name']}}</td>
+        <td>{{=(vm['owner'])}}</td>
+        {{if is_moderator():}}
+        <td>{{=vm['hostip']}}</td>
+        {{pass}}
+        <td>{{=vm['private_ip']}}</td>
+        <td>{{=vm['public_ip']}}</td>
+        <td>{{=vm['RAM']}}</td>
+		<td>{{=vm['vcpus']}}</td>
+        <td>{{=vm['status']}}</td>
+        <td>
+        {{=A(IMG(_src=URL('static','images/settings.png'), _height=18, _width=18),
+        _href=URL(r=request, f='settings', args=[vm['id']]), _id="vm_"+str(vm['id']), 
+        _title="Settings", 
+        _alt="Settings")}}
+        </td>
+      </tr>
+    {{pass}}
+    </tbody>
+  </table>
+  {{pass}}
+
+  </div>
+  
+  <div id="templateTab">
+  {{
+    if not saved_templates:
+  }}
+  <h3>No Available Template</h3>
+  {{else:}}
+  <table id="mytemp" class="tablesorter">
+    <thead>
+      <tr>
+        <th>Name of Template</th>
+        <th>Operating System</th>
+        <th>OS Name</th>
+        <th>OS Version</th>
+        <th>OS Type</th>
+		<th>Architecture</th>
+		<th>Harddisk(GB)</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+    {{for temp in saved_templates:}}
+      <tr>
+        <td>{{=temp['name']}}</td>
+        <td>{{=(temp['os'])}}</td>
+		<td>{{=temp['os_name']}}</td>
+        <td>{{=temp['os_version']}}</td>
+        <td>{{=temp['os_type']}}</td>
+        <td>{{=temp['arch']}}</td>
+        <td>{{=temp['hdd']}}</td>
+        <td>
+        {{=A(IMG(_src=URL('static','images/delete.png'), _height=18, _width=18),
+        _href=URL(r=request, f='delete_template', args=[temp['vm_id'], temp['id']]), 
+        _title="Delete Template", 
+        _alt="Delete Template")}}
+        </td>
+      </tr>
+    {{pass}}
+    </tbody>
+  </table>
+  {{pass}}
+  </div>
+ 
+</div>
+
+
+
+
+<script>
+jQuery(document).ready(function(){
+      jQuery("#myvms").tablesorter({ headers: {2: {sorter:"ipAddress"}, 3: {sorter:"ipAddress"}} }); 
+      jQuery("#mytemp").tablesorter(); 
+      
+});
+</script>

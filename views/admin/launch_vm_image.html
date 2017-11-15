@@ -1,0 +1,216 @@
+{{extend 'layout.html'}}
+
+<div class="post">
+    <h2 class="subtitle">{{=T('Launch VM Image')}}</h2>
+    <div class="entry">
+        {{=form}}
+    </div>
+</div>
+
+<div>
+    <p>
+        <b>NOTE:</b><br/>
+        <ul>
+            <li>VM Image should be present at &lt;Datastore_mounted_path&gt;/vm_images/&lt;VM_Image_Name&gt;/&lt;VM_Image_Name.qcow2&gt; </li>
+            <li>If Public IP is not required, enter 'Not Assigned'. </li>
+            <li>If Public IP is left blank, random public IP will be assigned, else requested public IP will be assigned.</li>
+            <li>Private IP should belong to requested security domain. </li>
+            <li>If Private IP is left blank, random private IP will be assigned. </li>
+        </ul>
+    </p>
+</div>
+
+<script>
+jQuery(document).ready(function(){
+    populate_private_ip();
+    populate_public_ip();
+});
+
+jQuery('#vm_data_security_domain').change(function(){
+    populate_private_ip();
+});
+
+function populate_private_ip() {
+    var sdval = $('#vm_data_security_domain').val();
+    $('#vm_data_private_ip').empty();
+
+    var _url = "{{=URL('get_private_ip_list')}}";
+    if(sdval.trim() != '')
+    {
+        jQuery.post(_url, {keywords:sdval},
+            function(result){
+                if(result != ''){
+                     $("#vm_data_private_ip").append(result);
+                }
+            }
+        );
+    }
+}
+
+function populate_public_ip() {
+    $('#vm_data_public_ip').empty();
+    jQuery.post("{{=URL('get_public_ip_list')}}",
+        function(result){
+            if(result != ''){
+                 $("#vm_data_public_ip").append(result);
+            }
+        }
+    );
+}
+
+function verify_requester() {
+	jQuery('.flash').hide().html('');
+    var verify_url = "{{=URL('verify_user')}}";
+    var requester_user = jQuery('#requester_user').val();
+    if(requester_user.trim() != '')
+    {
+        jQuery.post(verify_url, {keywords:requester_user},
+            function(result){
+                if(result != 'None'){
+                    if($('#requester_name_row'))
+                    {
+                        $('#requester_name_row').remove();
+                    }
+                    $('<tr id="requester_name_row"><td></td><td>'+result+'</td><td></td></tr>').insertAfter($('#requester_row'));
+                }else
+                {
+                    if($('#requester_name_row'))
+                    {
+                        $('#requester_name_row').remove();
+                    }
+                    jQuery('.flash').html('Requester Username is not valid').slideDown();
+                }
+            }
+        );
+    }
+}
+
+function verify_owner() {
+	jQuery('.flash').hide().html('');
+    var verify_url = "{{=URL('verify_user')}}";
+    var owner_user = jQuery('#owner_user').val();
+    if(owner_user.trim() != '')
+    {
+        jQuery.post(verify_url, {keywords:owner_user},
+            function(result){
+                if(result != 'None'){
+                    if($('#owner_name_row'))
+                    {
+                        $('#owner_name_row').remove();
+                    }
+                    $('<tr id="owner_name_row"><td></td><td>'+result+'</td><td></td></tr>').insertAfter($('#owner_row'));
+                }else
+                {
+                    if($('#owner_name_row'))
+                    {
+                        $('#owner_name_row').remove();
+                    }
+                    jQuery('.flash').html('Owner Username is not valid').slideDown();
+                }
+            }
+        );
+    }
+}
+
+function check_collaborator(){
+    var vm_users = jQuery('[name="vm_users"]').val();
+    var vm_username = jQuery('#collaborator').val();
+
+    var users_num = jQuery('[id^=user_]').length;
+    if(users_num == 5){
+        jQuery('.flash').html('Only upto 5 collaborators can be added to the VM').slideDown();
+        return;
+    }
+    if(vm_users.indexOf('|'+vm_username+'|') != -1)
+    {
+        $('.flash').html('A collaborator cannot be added twice').slideDown();
+        $('#collaborator').val('');
+        return;
+    }
+    
+    add_collaborator(vm_username, true)
+}
+
+function add_collaborator(vm_username, showmsg) {
+
+    var verify_url = "{{=URL('verify_user')}}";
+    jQuery.post(verify_url, {keywords:vm_username},
+        function(result){
+            if(result != 'None'){
+                jQuery('[name="vm_users"]').val($('[name="vm_users"]').val() + vm_username + '|');
+                
+                $('<tr id="user_'+vm_username+'"><td></td><td>'+result+'</td><td><a href="#" onclick="remove_collaborator(\''+vm_username+'\')">Remove</a></td></tr>').insertAfter($('#collaborator_row'));
+                
+                jQuery('#collaborator').val('');
+                if(showmsg){
+                    jQuery('.flash').html('Collaborator added').slideDown();
+                }
+            }else
+            {
+                if(showmsg){
+                    jQuery('.flash').html('Collaborator Username is not valid').slideDown();
+                }
+            }
+        }
+    );
+}
+
+function remove_collaborator(vm_user){
+    var vm_users = jQuery('[name="vm_users"]').val()
+    vm_users = vm_users.replace(vm_user+'|', '');
+    jQuery('[name="vm_users"]').val(vm_users);
+    $('#user_'+vm_user).remove();
+}
+
+function check_extra_disk(){
+    var extra_disks = jQuery('[name="extra_disks"]').val();
+    var disk_name = jQuery('#attach_disks').val();
+
+    if(extra_disks.indexOf('|'+disk_name+'|') != -1)
+    {
+        $('.flash').html('Disk cannot be added twice').slideDown();
+        $('#attach_disks').val('');
+        return;
+    }
+
+    var vm_image_name = jQuery('#vm_data_vm_identity').val();
+    var datastore_id = jQuery('#vm_data_datastore_id').val();
+    add_extra_disk(vm_image_name, disk_name, datastore_id, true)
+}
+
+function add_extra_disk(vm_image_name, disk_name, datastore_id, showmsg) {
+
+    var verify_disk_url = "{{=URL('verify_extra_disk')}}";
+    jQuery.post(verify_disk_url, {vm_image_name:vm_image_name, disk_name:disk_name, datastore_id:datastore_id},
+        function(result){
+            if(result != 'None'){
+                jQuery('[name="extra_disks"]').val($('[name="extra_disks"]').val() + disk_name + '|');
+                
+                $('<tr id="disk_'+disk_name+'"><td></td><td>'+result+'</td><td><a href="#" onclick="remove_extra_disk(\''+disk_name+'\')">Remove</a></td></tr>').insertAfter($('#attach_disk_row'));
+                
+                jQuery('#attach_disks').val('');
+                if(showmsg){
+                    jQuery('.flash').html('Extra Disk added').slideDown();
+                }
+            }else
+            {
+                if(showmsg){
+                    jQuery('.flash').html('Extra Disk name is not valid').slideDown();
+                }
+            }
+        }
+    );
+}
+
+function remove_extra_disk(disk_name){
+    var extra_disks = jQuery('[name="extra_disks"]').val()
+    extra_disks = extra_disks.replace(disk_name+'|', '');
+    jQuery('[name="extra_disks"]').val(extra_disks);
+    $('#disk_'+disk_name).remove();
+}
+
+jQuery('form').submit(function(){
+    $('#collaborator').val($('[name="vm_users"]').val())
+});
+
+</script>

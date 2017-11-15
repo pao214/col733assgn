@@ -1,0 +1,126 @@
+{{extend 'layout.html'}}
+<div style="text-align:right;padding-right:40px">
+{{=form}}
+</div>
+<div id="tabs-task">
+<ul>
+    <li><a href="#pendTab", onclick="set_tab_cookie(0);">Pending Tasks</a></li>
+    <li><a href="#compTab", onclick="set_tab_cookie(1);">Completed Tasks</a></li>
+    <li><a href="#failTab", onclick="set_tab_cookie(2);">Failed Tasks</a></li>
+</ul>
+
+<div id="pendTab">
+
+{{
+  if not pending:
+}}
+<h3>No Pending Tasks</h3>
+{{else:}}
+  <div class="TABLE">
+  <table id="pendingtasks">
+      <tr>
+        <th>Task</th>
+        <th>VM</th>
+        <th>Requested By</th>
+        <th>Request Time</th>
+        <th>Attention Time</th>
+      </tr>
+	{{for task in pending:}}
+      <tr>
+        <td>{{=task['task_type']}}</td>
+        <td>{{=task['vm_name']}}</td>
+        <td>{{=task['user_name']}}</td>
+        <td>{{=task['start_time']}}</td>
+        <td>{{=task['att_time']}}</td>
+      </tr>
+	{{pass}}
+</table>
+</div>
+{{pass}}
+</div>
+<div id="compTab">
+{{
+  if not success:
+}}
+<h3>No Completed Tasks</h3>
+{{else:}}
+  <div class="TABLE">
+  <table id="completedtasks">
+      <tr>
+        <th>Task</th>
+        <th>VM</th>
+        <th>Requested By</th>
+        <th>Request Time</th>
+        <th>Final Time</th>
+      </tr>
+	{{for task in success:}}
+      <tr>
+        <td>{{=task['task_type']}}</td>
+        <td>{{=task['vm_name']}}</td>
+        <td>{{=task['user_name']}}</td>
+        <td>{{=task['start_time']}}</td>
+        <td>{{=task['end_time']}}</td>
+      </tr>
+	{{pass}}
+</table>
+</div>
+{{pass}}
+</div>
+<div id="failTab">
+{{
+  counter = 0;
+  if not failed:
+}}
+<h3>No Failed Tasks</h3>
+{{else:}}
+<script>
+function clicker(content){
+        var thediv=document.getElementById("error"+content.toString());
+        if(thediv.style.display == "none"){
+                thediv.style.display = "";
+                thediv.innerHTML = "<span id=\"overlayblock\"><div style=\"color:cyan;font-weight:bold;font-size-adjust:1;font-family:monospace;\">"+document.getElementById("errorcontent"+content.toString()).innerHTML+"</div></br></br></br><a href='#' onclick='return clicker("+content+");'>CLOSE WINDOW</a></span>";
+        }else{
+                thediv.style.display = "none";
+                thediv.innerHTML = '';
+        }
+        return false;
+}
+</script>
+
+<div class="TABLE">
+  <table id="failedtasks">
+      <tr>
+        <th>Task</th>
+        <th>VM</th>
+        <th>Requested By</th>
+        <th>Debug Info</th>
+        <th>Request Time</th>
+        <th>Final Time</th>
+      </tr>
+	{{for task in failed:}}
+      <tr>
+        <td>{{=task['task_type']}}</td>
+        <td>{{=task['vm_name']}}</td>
+        <td>{{=task['user_name']}}</td>
+        <div id="errorcontent{{=str(counter)}}" style="display:none;">{{=task['error_msg']}}</div>
+        <td><div id="error{{=str(counter)}}" style="display: none;"></div><a href='#' onclick='return clicker("{{=counter}}");'>Error</a></td>
+        <td>{{=task['start_time']}}</td>
+        <td>{{=task['end_time']}}</td>
+      </tr>
+      {{counter=counter+1}}
+	{{pass}}
+  </table>
+  </div>
+{{pass}}
+</div>
+</div>
+
+<script>
+$(document).keypress(function(e) {
+  if(e.which == 13) {
+    tab_refresh();
+    $(this).closest('form').submit()
+  }
+})
+</script>
+

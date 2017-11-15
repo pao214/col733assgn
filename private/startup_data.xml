@@ -1,0 +1,80 @@
+
+<dataset>
+	<table name="user_group">
+		<row role="admin" description="Super User"/>
+		<row role="orgadmin" description="Organisation Level Admin"/>
+		<row role="faculty" description="Faculty User"/>
+		<row role="user" description="Normal User"/>
+	</table>
+	
+	<table name="organisation">
+		<row id="1" name="ADMIN" details="Baadal Admin"/>
+		<row id="2" name="IITD" details="Indian Institute of Technology"/>
+	</table>
+	
+	<table name="constants">
+		<row name="baadal_status" value="up"/>
+		<row name="vmfiles_path" value="/mnt/datastore"/>
+		<row name="extra_disks_dir" value="vm_extra_disks"/>
+		<row name="templates_dir" value="vm_templates"/>
+		<row name="archives_dir" value="vm_deleted"/>
+                <row name="vm_migration_data" value="vm_migration_data"/>
+		<row name="vncport_start_range" value="20000"/>
+		<row name="vncport_end_range" value="50000"/>
+		<row name="vm_rrds_dir" value="vm_rrds"/>
+		<row name="graph_file_dir" value="/images/vm_graphs/"/>
+		<row name="admin_email" value="baadalsupport@cse.iitd.ernet.in"/>
+		<row name="vms" value="/vm_images"/>
+		<row name="memory_overload_file_path" value="/baadal/baadal/baadalinstallation/baadal/private"/>
+	</table>
+
+	<table name="vlan">
+		<row id="1" name="vlan0" vlan_tag="1" vlan_addr="192.168.0.0"/>
+		<row id="2" name="vlan1" vlan_tag="1" vlan_addr="192.168.1.0" />
+		<row id="3" name="vlan2" vlan_tag="2" vlan_addr="192.168.2.0" />
+		<row name="vlan" vlan_tag="3" vlan_addr="192.168.3.0"/>
+		<row name="vlan4" vlan_tag="4" vlan_addr="192.168.4.0" />
+	</table>
+
+	<table name="security_domain">
+		<row id="1" name="Private" vlan="1" visible_to_all="False" />
+		<row id="2" name="Infrastructure" vlan="2" visible_to_all="False" />
+		<row id="3" name="Research" vlan="3" visible_to_all="True" />
+	</table>
+
+	<table name="user">
+		<row id="-1" first_name="System" last_name="User" email="System@baadal.tmp" username="system" registration_id="system" organisation_id="1"/>
+		<row id="1" first_name="Admin" last_name="User" email="Admin@baadal.tmp" username="admin" password="baadal" organisation_id="1"/>
+	</table>
+
+	<table name="user_membership">
+		<row user_id="1" group_id="1"/>
+		<row user_id="1" group_id="4"/>
+	</table>
+
+	<table name="public_ip_pool">
+		<row id="-1" public_ip="0.0.0.0" is_active="False" />
+	</table>
+
+	<table name="private_ip_pool">
+		<row id="1" private_ip="192.168.0.1" mac_addr="b2:2e:e0:b9:ed:4f" vlan="1" is_active="True"/>
+                <row id="2" private_ip="192.168.2.5" mac_addr="A2:00:00:6B:B0:EB" vlan="3" is_active="True"/>
+                <row id="3" private_ip="192.168.2.6" mac_addr="A2:00:00:FA:35:7E" vlan="3" is_active="True"/>
+                <row id="4" private_ip="192.168.2.7" mac_addr="A2:00:00:3E:1A:54" vlan="3" is_active="True"/>
+                <row id="5" private_ip="192.168.2.8" mac_addr="A2:00:00:77:2F:49" vlan="3" is_active="True"/>
+                <row id="6" private_ip="192.168.2.9" mac_addr="A2:00:00:9B:D7:BD" vlan="3" is_active="True"/>
+	</table>
+
+	<table name="datastore">
+		<row id="1" ds_name="filer01" ds_ip="192.168.0.1" capacity="10" username="root" path="/baadal/data/" used="0" system_mount_point="/mnt/datastore/"/>
+	</table>
+
+        <table name="host">
+                <row id="1" host_name="host01" host_ip="1" public_ip="" HDD="50" CPUs="1" RAM="3" category="" status="1" slot_number="" rack_number="" extra="" host_type="Physical"/>
+        </table>
+
+        <table name="template">
+                <row id="1" name="template" os="Linux" os_name="Ubuntu" os_version="14.04" os_type="Desktop" arch="amd64" hdd="10" hdfile="template.qcow2" type="QCOW2" tag="" datastore_id="1" owner="" is_active="T"/>
+        </table>
+
+</dataset>

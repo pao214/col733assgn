@@ -1,0 +1,22 @@
+{{extend 'layout.html'}}
+
+<div class="post">
+    <h2 class="subtitle">{{=T('Edit VM Config')}}</h2>
+    <div class="entry">
+        {{=form}}
+    </div>
+</div>
+
+<script>
+jQuery(document).ready(function(){
+    jQuery('#request_queue_vm_name').prop('disabled', true);
+{{if form.errors:}}  
+    jQuery('.flash').html('No change detected').slideDown();
+{{pass}}
+
+});
+
+jQuery('form').submit(function(){
+    jQuery('#request_queue_vm_name').prop('disabled', false);
+});
+</script>

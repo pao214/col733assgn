@@ -1,0 +1,19 @@
+{{extend 'layout.html'}}
+
+<div class="post">
+	<h2 class="subtitle">{{=T('Add Host')}}</h2>
+	<div class="entry">
+		{{=form}}
+	</div>
+</div>
+
+<script>
+jQuery(document).ready(function(){
+	$('#host_host_ip').prop('disabled',true);
+});
+
+jQuery(document).submit(function(){
+        $('#host_host_ip').prop('disabled',false);
+});
+
+</script>
